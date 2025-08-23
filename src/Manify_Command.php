@@ -210,7 +210,7 @@ class Manify_Command {
 	}
 
 	/**
-	 * Get subcommand name from PHPDoc or convert method name.
+	 * Get subcommand name.
 	 *
 	 * @since 1.0.0
 	 *
@@ -224,12 +224,8 @@ class Manify_Command {
 			return $matches[1];
 		}
 
-		// Convert method name to subcommand format.
-		// Remove trailing underscore and convert underscores to hyphens.
-		$subcommand = rtrim( $method_name, '_' );
-		$subcommand = str_replace( '_', '-', $subcommand );
-
-		return $subcommand;
+		// Use method name as-is when no @subcommand tag is present.
+		return $method_name;
 	}
 
 	/**
