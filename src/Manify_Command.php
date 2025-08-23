@@ -131,7 +131,7 @@ class Manify_Command {
 	private function generate_doc_for_command( $command_config, $destination ) {
 		$command_file  = $command_config['plugin_dir'] . '/' . $command_config['file'];
 		$command_class = $command_config['class'];
-		$command_slug  = $command_config['command'];
+		$command_slug  = $command_config['command_name'];
 
 		if ( ! file_exists( $command_file ) ) {
 			WP_CLI::warning( "Command file not found: {$command_file}" );
