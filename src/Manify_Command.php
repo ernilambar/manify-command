@@ -33,7 +33,7 @@ class Manify_Command {
 	 *
 	 * ## EXAMPLES
 	 *
-	 *     # Generate docs for all plugins.
+	 *     # Generate docs for current project's WP-CLI commands.
 	 *     $ wp manify generate
 	 *     Success: Documentation generated successfully.
 	 *
@@ -46,7 +46,7 @@ class Manify_Command {
 	 * @param array $args       List of the positional arguments.
 	 * @param array $assoc_args List of the associative arguments.
 	 *
-	 * @subcommand generate
+	 * @when before_wp_load
 	 */
 	public function generate( $args, $assoc_args = [] ) {
 		$destination = $assoc_args['destination'] ?? 'docs/';
@@ -58,11 +58,11 @@ class Manify_Command {
 			}
 		}
 
-		// Get WP-CLI commands configuration.
+		// Get WP-CLI commands configuration from current directory.
 		$commands = $this->get_wp_cli_commands();
 
 		if ( empty( $commands ) ) {
-			WP_CLI::warning( 'No WP-CLI commands found in composer.json files.' );
+			WP_CLI::error( 'No WP-CLI commands found in composer.json. Please ensure your composer.json contains WP-CLI command configuration in the "extra" section.' );
 			return;
 		}
 
@@ -83,40 +83,87 @@ class Manify_Command {
 	}
 
 	/**
-	 * Get WP-CLI commands from composer.json files.
+	 * Get WP-CLI commands from composer.json in current directory.
 	 *
 	 * @since 1.0.0
 	 *
 	 * @return array Array of command configurations.
 	 */
 	private function get_wp_cli_commands() {
+		$composer_data = $this->validate_composer_file();
+
+		if ( ! $composer_data ) {
+			return [];
+		}
+
 		$commands = [];
+		$extra    = $composer_data['extra'];
 
-		// Get all active plugins.
-		$plugins = get_plugins();
+		// Use the current working directory where the command is run from.
+		$run_path = getcwd();
 
-		foreach ( $plugins as $plugin_file => $plugin_data ) {
-			$plugin_slug = dirname( $plugin_file );
-
-			$plugin_dir    = WP_PLUGIN_DIR . '/' . $plugin_slug;
-			$composer_file = $plugin_dir . '/composer.json';
-
-			if ( file_exists( $composer_file ) ) {
-				$composer_data = json_decode( file_get_contents( $composer_file ), true );
-
-				if ( isset( $composer_data['extra']['wp-cli-commands'] ) ) {
-					foreach ( $composer_data['extra']['wp-cli-commands'] as $command_name => $command_config ) {
-						$command_config['plugin_slug']  = $plugin_slug;
-						$command_config['plugin_dir']   = $plugin_dir;
-						$command_config['command_name'] = $command_name;
-
-						$commands[] = $command_config;
-					}
-				}
+		// Check for commands in extra.commands (array format).
+		if ( isset( $extra['commands'] ) && is_array( $extra['commands'] ) ) {
+			foreach ( $extra['commands'] as $command_name ) {
+				$commands[] = [
+					'command_name' => $command_name,
+					'plugin_dir'   => $run_path,
+					'plugin_slug'  => basename( $run_path ),
+				];
 			}
 		}
 
+		// Check for commands in extra.wp-cli-commands (object format).
+		if ( isset( $extra['wp-cli-commands'] ) && is_array( $extra['wp-cli-commands'] ) ) {
+			foreach ( $extra['wp-cli-commands'] as $command_name => $command_config ) {
+				$command_config['command_name'] = $command_name;
+				$command_config['plugin_dir']   = $run_path;
+				$command_config['plugin_slug']  = basename( $run_path );
+
+				$commands[] = $command_config;
+			}
+		}
+
+		if ( empty( $commands ) ) {
+			WP_CLI::error( 'No WP-CLI commands found in composer.json. Please add commands to "extra.commands" or "extra.wp-cli-commands" section.' );
+		}
+
 		return $commands;
+	}
+
+	/**
+	 * Validate composer.json file and return parsed data.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array|false Composer data array or false on validation failure.
+	 */
+	private function validate_composer_file() {
+		// Use the current working directory where the command is run from.
+		$run_path = getcwd();
+
+		// Check for composer.json in the current directory.
+		$composer_file = rtrim( $run_path, '/' ) . '/composer.json';
+
+		if ( ! file_exists( $composer_file ) ) {
+			WP_CLI::error( "No composer.json file found in: {$run_path}" );
+			return false;
+		}
+
+		$composer_data = json_decode( file_get_contents( $composer_file ), true );
+
+		if ( null === $composer_data ) {
+			WP_CLI::error( 'Invalid JSON in composer.json file.' );
+			return false;
+		}
+
+		// Check for WP-CLI commands in extra section.
+		if ( ! isset( $composer_data['extra'] ) ) {
+			WP_CLI::error( 'No "extra" section found in composer.json. WP-CLI commands should be defined in the "extra" section.' );
+			return false;
+		}
+
+		return $composer_data;
 	}
 
 	/**
@@ -129,17 +176,25 @@ class Manify_Command {
 	 * @return bool Whether documentation was generated successfully.
 	 */
 	private function generate_doc_for_command( $command_config, $destination ) {
-		$command_file  = $command_config['plugin_dir'] . '/' . $command_config['file'];
-		$command_class = $command_config['class'];
-		$command_slug  = $command_config['command_name'];
+		$command_slug = $command_config['command_name'];
+		$plugin_dir   = $command_config['plugin_dir'];
 
-		if ( ! file_exists( $command_file ) ) {
-			WP_CLI::warning( "Command file not found: {$command_file}" );
+		// Get class and file from command config.
+		$command_class = $command_config['class'] ?? null;
+		$command_file  = $command_config['file'] ?? null;
+
+		if ( ! $command_class ) {
+			WP_CLI::warning( "No class specified for command '{$command_slug}'" );
 			return false;
 		}
 
-		// Include the command file.
-		include_once $command_file;
+		// Include the command file if specified.
+		if ( $command_file ) {
+			$file_path = $plugin_dir . '/' . $command_file;
+			if ( file_exists( $file_path ) ) {
+				include_once $file_path;
+			}
+		}
 
 		try {
 			$reflection_class = new ReflectionClass( $command_class );
