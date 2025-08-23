@@ -78,8 +78,8 @@
 	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
 		<properties>
 			<property name="prefixes" type="array">
-				<element value="Nilambar\PCP_Report_Command"/><!-- Namespaces. -->
-				<element value="wpcli_pcp_report"/><!-- Global variables and such. -->
+				<element value="Nilambar\Manify_Command"/><!-- Namespaces. -->
+				<element value="wpcli_manify"/><!-- Global variables and such. -->
 			</property>
 		</properties>
 	</rule>
