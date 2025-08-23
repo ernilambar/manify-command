@@ -7,12 +7,11 @@
 
 namespace Nilambar\Manify_Command;
 
-use WP_CLI;
-use WP_CLI\Utils;
-use WP_CLI\DocParser;
 use ReflectionClass;
-use ReflectionMethod;
 use ReflectionException;
+use ReflectionMethod;
+use WP_CLI;
+use WP_CLI\DocParser;
 
 /**
  * Manify_Command Class.
@@ -20,31 +19,6 @@ use ReflectionException;
  * @since 1.0.0
  */
 class Manify_Command {
-
-	/**
-	 * Test command.
-	 *
-	 * ## OPTIONS
-	 *
-	 * No options available.
-	 *
-	 * ## EXAMPLES
-	 *
-	 *     # Test the command.
-	 *     $ wp manify test
-	 *     Success: Test.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param array $args       List of the positional arguments.
-	 * @param array $assoc_args List of the associative arguments.
-	 *
-	 * @when after_wp_load
-	 * @subcommand test
-	 */
-	public function test_( $args, $assoc_args = [] ) {
-		WP_CLI::success( 'Test.' );
-	}
 
 	/**
 	 * Generate markdown documentation from WP-CLI commands.
@@ -57,17 +31,10 @@ class Manify_Command {
 	 * default: docs/
 	 * ---
 	 *
-	 * [--plugin=<plugin>]
-	 * : Specific plugin to generate docs for. If not provided, generates for all plugins.
-	 *
 	 * ## EXAMPLES
 	 *
 	 *     # Generate docs for all plugins.
 	 *     $ wp manify generate
-	 *     Success: Documentation generated successfully.
-	 *
-	 *     # Generate docs for a specific plugin.
-	 *     $ wp manify generate --plugin=my-plugin
 	 *     Success: Documentation generated successfully.
 	 *
 	 *     # Generate docs with custom destination.
@@ -83,7 +50,6 @@ class Manify_Command {
 	 */
 	public function generate( $args, $assoc_args = [] ) {
 		$destination = $assoc_args['destination'] ?? 'docs/';
-		$plugin = $assoc_args['plugin'] ?? '';
 
 		// Create destination directory if it doesn't exist.
 		if ( ! is_dir( $destination ) ) {
@@ -93,7 +59,7 @@ class Manify_Command {
 		}
 
 		// Get WP-CLI commands configuration.
-		$commands = $this->get_wp_cli_commands( $plugin );
+		$commands = $this->get_wp_cli_commands();
 
 		if ( empty( $commands ) ) {
 			WP_CLI::warning( 'No WP-CLI commands found in composer.json files.' );
@@ -105,7 +71,7 @@ class Manify_Command {
 		foreach ( $commands as $command_config ) {
 			$result = $this->generate_doc_for_command( $command_config, $destination );
 			if ( $result ) {
-				$generated_files++;
+				++$generated_files;
 			}
 		}
 
@@ -121,11 +87,10 @@ class Manify_Command {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param string $plugin Specific plugin to process.
 	 * @return array Array of command configurations.
 	 */
-	private function get_wp_cli_commands( $plugin = '' ) {
-		$commands = array();
+	private function get_wp_cli_commands() {
+		$commands = [];
 
 		// Get all active plugins.
 		$plugins = get_plugins();
@@ -133,12 +98,7 @@ class Manify_Command {
 		foreach ( $plugins as $plugin_file => $plugin_data ) {
 			$plugin_slug = dirname( $plugin_file );
 
-			// Skip if specific plugin is requested and doesn't match.
-			if ( ! empty( $plugin ) && $plugin_slug !== $plugin ) {
-				continue;
-			}
-
-			$plugin_dir = WP_PLUGIN_DIR . '/' . $plugin_slug;
+			$plugin_dir    = WP_PLUGIN_DIR . '/' . $plugin_slug;
 			$composer_file = $plugin_dir . '/composer.json';
 
 			if ( file_exists( $composer_file ) ) {
@@ -146,9 +106,10 @@ class Manify_Command {
 
 				if ( isset( $composer_data['extra']['wp-cli-commands'] ) ) {
 					foreach ( $composer_data['extra']['wp-cli-commands'] as $command_name => $command_config ) {
-						$command_config['plugin_slug'] = $plugin_slug;
-						$command_config['plugin_dir'] = $plugin_dir;
+						$command_config['plugin_slug']  = $plugin_slug;
+						$command_config['plugin_dir']   = $plugin_dir;
 						$command_config['command_name'] = $command_name;
+
 						$commands[] = $command_config;
 					}
 				}
@@ -168,9 +129,9 @@ class Manify_Command {
 	 * @return bool Whether documentation was generated successfully.
 	 */
 	private function generate_doc_for_command( $command_config, $destination ) {
-		$command_file = $command_config['plugin_dir'] . '/' . $command_config['file'];
+		$command_file  = $command_config['plugin_dir'] . '/' . $command_config['file'];
 		$command_class = $command_config['class'];
-		$command_slug = $command_config['command'];
+		$command_slug  = $command_config['command'];
 
 		if ( ! file_exists( $command_file ) ) {
 			WP_CLI::warning( "Command file not found: {$command_file}" );
@@ -188,7 +149,7 @@ class Manify_Command {
 		}
 
 		$markdown_content = '';
-		$methods = $reflection_class->getMethods( ReflectionMethod::IS_PUBLIC );
+		$methods          = $reflection_class->getMethods( ReflectionMethod::IS_PUBLIC );
 
 		foreach ( $methods as $method ) {
 			$doc_comment = $method->getDocComment();
@@ -225,7 +186,7 @@ class Manify_Command {
 
 			if ( ! empty( $options ) ) {
 				$markdown_content .= '## OPTIONS';
-				$options  = str_replace( '## OPTIONS', '', $options );
+				$options           = str_replace( '## OPTIONS', '', $options );
 				$markdown_content .= $this->get_wrapped( trim( $options ) );
 			}
 
@@ -247,12 +208,6 @@ class Manify_Command {
 			return false;
 		}
 	}
-
-
-
-
-
-
 
 	/**
 	 * Get subcommand name from PHPDoc or convert method name.
