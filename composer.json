@@ -17,7 +17,7 @@
   },
   "require": {
     "php": ">=7.4",
-    "wp-cli/wp-cli": "^2"
+    "wp-cli/wp-cli": "^2.13"
   },
   "require-dev": {
     "slevomat/coding-standard": "^8",
@@ -70,7 +70,7 @@
     "phpcs": "run-phpcs-tests",
     "phpstan": "run-phpstan-tests",
     "phpunit": "run-php-unit-tests",
-    "prepare-behat-tests": "install-package-tests",
+    "prepare-tests": "install-package-tests",
     "readme": "./vendor/bin/wp scaffold package-readme . --force --branch=main",
     "test": [
       "@lint",
