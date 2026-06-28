@@ -342,7 +342,7 @@ Feature: Documentation generation
     Then the docs/my-plugin-run.md file should exist
     And the docs/my-plugin run.md file should not exist
 
-  Scenario: OPTIONS section is rendered verbatim without a code fence
+  Scenario: OPTIONS section is rendered inside a code fence
     Given an empty directory
     And a composer.json file:
       """
@@ -378,8 +378,10 @@ Feature: Documentation generation
       """
       ## OPTIONS
 
+      ```
       [--count=<count>]
       : Max number of items.
+      ```
       """
 
   Scenario: EXAMPLES section is rendered inside a code fence
