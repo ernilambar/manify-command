@@ -204,6 +204,7 @@ class Manify_Command {
 		}
 
 		$markdown_content = '';
+		$single_method    = $command_config['method'] ?? null;
 		$methods          = $reflection_class->getMethods( ReflectionMethod::IS_PUBLIC );
 
 		foreach ( $methods as $method ) {
@@ -215,10 +216,18 @@ class Manify_Command {
 
 			$method_name = $method->getName();
 
+			if ( $single_method && $method_name !== $single_method ) {
+				continue;
+			}
+
 			// Extract subcommand from @subcommand annotation or convert method name.
 			$subcommand = $this->get_subcommand_name( $doc_comment, $method_name );
 
-			$markdown_content .= "# wp {$command_slug} {$subcommand}\n";
+			if ( $single_method ) {
+				$markdown_content .= "# wp {$command_slug}\n";
+			} else {
+				$markdown_content .= "# wp {$command_slug} {$subcommand}\n";
+			}
 			$markdown_content .= "\n";
 
 			$parser = new DocParser( $doc_comment );

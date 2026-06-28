@@ -1,0 +1,8 @@
+/.editorconfig export-ignore
+/.claude export-ignore
+/.github export-ignore
+/.gitignore export-ignore
+/behat.yml export-ignore
+/CLAUDE.md export-ignore
+/features export-ignore
+/phpcs.xml.dist export-ignore

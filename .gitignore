@@ -13,3 +13,11 @@ composer.lock
 phpunit.xml
 phpcs.xml
 .phpcs.xml
+
+# Environment files
+.env
+.env.*
+!.env.example
+*.local
+*.local.*
+
