@@ -228,26 +228,14 @@ class Manify_Command {
 
 			$markdown_content .= "{$short_description}\n\n";
 
-			$options  = '';
-			$examples = '';
+			$sections = $this->split_into_sections( $parser->get_longdesc() );
 
-			$exploded = explode( '## EXAMPLES', $parser->get_longdesc() );
-
-			if ( 1 === count( $exploded ) ) {
-				$options = reset( $exploded );
-			} elseif ( 2 === count( $exploded ) ) {
-				$options  = $exploded[0];
-				$examples = $exploded[1];
-			}
-
-			if ( ! empty( $options ) ) {
-				$options           = trim( str_replace( '## OPTIONS', '', $options ) );
-				$markdown_content .= "## OPTIONS\n\n{$options}\n\n";
-			}
-
-			if ( ! empty( $examples ) ) {
-				$markdown_content .= '## EXAMPLES';
-				$markdown_content .= $this->get_wrapped( $this->get_clean_examples( $examples ) );
+			foreach ( $sections as $section_name => $section_content ) {
+				if ( 'EXAMPLES' === $section_name ) {
+					$markdown_content .= $this->render_section( $section_name, $this->dedent( $section_content ), true );
+				} else {
+					$markdown_content .= $this->render_section( $section_name, $section_content );
+				}
 			}
 
 			$markdown_content .= "\n";
@@ -295,15 +283,49 @@ class Manify_Command {
 	}
 
 	/**
-	 * Returns cleaned examples.
+	 * Splits a longdesc string into named sections keyed by ## HEADING.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param string $examples The content.
-	 * @return string Cleaned up examples.
+	 * @param string $longdesc The long description from DocParser.
+	 * @return array<string, string> Map of section name to content.
 	 */
-	private function get_clean_examples( $examples ) {
-		return $this->dedent( $examples );
+	private function split_into_sections( string $longdesc ): array {
+		$sections = [];
+		$current  = null;
+
+		foreach ( explode( "\n", $longdesc ) as $line ) {
+			if ( preg_match( '/^## ([A-Z][A-Z ]*)$/', trim( $line ), $m ) ) {
+				$current              = trim( $m[1] );
+				$sections[ $current ] = '';
+			} elseif ( null !== $current ) {
+				$sections[ $current ] .= $line . "\n";
+			}
+		}
+
+		return $sections;
+	}
+
+	/**
+	 * Renders a single documentation section with consistent spacing.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $name   Section heading (e.g. OPTIONS).
+	 * @param string $content Section body.
+	 * @param bool   $fenced Whether to wrap the body in a code fence.
+	 * @return string Rendered section, or empty string if content is blank.
+	 */
+	private function render_section( string $name, string $content, bool $fenced = false ): string {
+		$content = trim( $content );
+
+		if ( '' === $content ) {
+			return '';
+		}
+
+		$body = $fenced ? "```\n{$content}\n```" : $content;
+
+		return "## {$name}\n\n{$body}\n\n";
 	}
 
 	/**
@@ -339,17 +361,5 @@ class Manify_Command {
 				$lines
 			)
 		);
-	}
-
-	/**
-	 * Returns content wrapped with Markdown code.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param string $content The content.
-	 * @return string Wrapped content.
-	 */
-	private function get_wrapped( $content ) {
-		return "\n```\n" . trim( $content ) . "\n```\n\n";
 	}
 }
