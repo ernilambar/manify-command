@@ -40,10 +40,11 @@ class Markdown_Renderer {
 			$content .= $parser->get_shortdesc() . "\n\n";
 
 			foreach ( $this->split_into_sections( $parser->get_longdesc() ) as $name => $body ) {
+				$fenced   = in_array( $name, [ 'OPTIONS', 'EXAMPLES' ], true );
 				$content .= $this->render_section(
 					$name,
 					'EXAMPLES' === $name ? $this->dedent( $body ) : $body,
-					'EXAMPLES' === $name
+					$fenced
 				);
 			}
 
