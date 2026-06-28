@@ -39,7 +39,14 @@ class Markdown_Renderer {
 			$parser   = new DocParser( $method['doc_comment'] );
 			$content .= $parser->get_shortdesc() . "\n\n";
 
-			foreach ( $this->split_into_sections( $parser->get_longdesc() ) as $name => $body ) {
+			$longdesc = $parser->get_longdesc();
+			$parts    = preg_split( '/^## /m', $longdesc, 2 );
+			$preamble = is_array( $parts ) ? trim( $parts[0] ) : '';
+			if ( '' !== $preamble ) {
+				$content .= $preamble . "\n\n";
+			}
+
+			foreach ( $this->split_into_sections( $longdesc ) as $name => $body ) {
 				$fenced   = in_array( $name, [ 'OPTIONS', 'EXAMPLES' ], true );
 				$content .= $this->render_section(
 					$name,
