@@ -12,6 +12,7 @@ use ReflectionException;
 use ReflectionMethod;
 use WP_CLI;
 use WP_CLI\DocParser;
+use function WP_CLI\Utils\get_flag_value;
 
 /**
  * Manify_Command Class.
@@ -30,6 +31,9 @@ class Manify_Command {
 	 * ---
 	 * default: docs/
 	 * ---
+	 *
+	 * [--dry-run]
+	 * : Print file paths that would be generated without writing files.
 	 *
 	 * ## EXAMPLES
 	 *
@@ -50,9 +54,10 @@ class Manify_Command {
 	 */
 	public function generate( $args, $assoc_args = [] ) {
 		$destination = $assoc_args['destination'] ?? 'docs/';
+		$dry_run     = (bool) get_flag_value( $assoc_args, 'dry-run', false );
 
 		// Create destination directory if it doesn't exist.
-		if ( ! is_dir( $destination ) ) {
+		if ( ! $dry_run && ! is_dir( $destination ) ) {
 			if ( ! mkdir( $destination, 0755, true ) ) {
 				WP_CLI::error( "Could not create destination directory '{$destination}'." );
 			}
@@ -62,14 +67,13 @@ class Manify_Command {
 		$commands = $this->get_wp_cli_commands();
 
 		if ( empty( $commands ) ) {
-			WP_CLI::error( 'No WP-CLI commands found in composer.json. Please ensure your composer.json contains WP-CLI command configuration in the "extra" section.' );
-			return;
+			WP_CLI::error( 'No WP-CLI commands found in composer.json. Please ensure your composer.json contains WP-CLI command configuration in the "extra.wp-cli-commands" section.' );
 		}
 
 		$generated_files = 0;
 
 		foreach ( $commands as $command_config ) {
-			$result = $this->generate_doc_for_command( $command_config, $destination );
+			$result = $this->generate_doc_for_command( $command_config, $destination, $dry_run );
 			if ( $result ) {
 				++$generated_files;
 			}
@@ -102,17 +106,6 @@ class Manify_Command {
 		// Use the current working directory where the command is run from.
 		$run_path = getcwd();
 
-		// Check for commands in extra.commands (array format).
-		if ( isset( $extra['commands'] ) && is_array( $extra['commands'] ) ) {
-			foreach ( $extra['commands'] as $command_name ) {
-				$commands[] = [
-					'command_name' => $command_name,
-					'plugin_dir'   => $run_path,
-					'plugin_slug'  => basename( $run_path ),
-				];
-			}
-		}
-
 		// Check for commands in extra.wp-cli-commands (object format).
 		if ( isset( $extra['wp-cli-commands'] ) && is_array( $extra['wp-cli-commands'] ) ) {
 			foreach ( $extra['wp-cli-commands'] as $command_name => $command_config ) {
@@ -122,10 +115,6 @@ class Manify_Command {
 
 				$commands[] = $command_config;
 			}
-		}
-
-		if ( empty( $commands ) ) {
-			WP_CLI::error( 'No WP-CLI commands found in composer.json. Please add commands to "extra.commands" or "extra.wp-cli-commands" section.' );
 		}
 
 		return $commands;
@@ -173,9 +162,10 @@ class Manify_Command {
 	 *
 	 * @param array  $command_config Command configuration.
 	 * @param string $destination    Destination directory for markdown files.
+	 * @param bool   $dry_run        Whether to print paths without writing.
 	 * @return bool Whether documentation was generated successfully.
 	 */
-	private function generate_doc_for_command( $command_config, $destination ) {
+	private function generate_doc_for_command( $command_config, $destination, $dry_run = false ) {
 		$command_slug = $command_config['command_name'];
 		$plugin_dir   = $command_config['plugin_dir'];
 
@@ -208,24 +198,29 @@ class Manify_Command {
 		$methods          = $reflection_class->getMethods( ReflectionMethod::IS_PUBLIC );
 
 		foreach ( $methods as $method ) {
-			$doc_comment = $method->getDocComment();
-
-			if ( empty( $doc_comment ) ) {
-				continue;
-			}
-
 			$method_name = $method->getName();
 
 			if ( $single_method && $method_name !== $single_method ) {
 				continue;
 			}
 
-			// Extract subcommand from @subcommand annotation or convert method name.
-			$subcommand = $this->get_subcommand_name( $doc_comment, $method_name );
+			$is_invoke = '__invoke' === $method_name;
 
-			if ( $single_method ) {
+			if ( ! $is_invoke && str_starts_with( $method_name, '__' ) ) {
+				continue;
+			}
+
+			$doc_comment = $method->getDocComment();
+
+			if ( empty( $doc_comment ) ) {
+				continue;
+			}
+
+			if ( $single_method || $is_invoke ) {
 				$markdown_content .= "# wp {$command_slug}\n";
 			} else {
+				// Extract subcommand from @subcommand annotation or convert method name.
+				$subcommand        = $this->get_subcommand_name( $doc_comment, $method_name );
 				$markdown_content .= "# wp {$command_slug} {$subcommand}\n";
 			}
 			$markdown_content .= "\n";
@@ -262,8 +257,19 @@ class Manify_Command {
 			$markdown_content .= "\n";
 		}
 
+		if ( '' === $markdown_content ) {
+			WP_CLI::warning( "No documented methods on {$command_class}; skipping." );
+			return false;
+		}
+
 		// Write markdown file.
 		$output_file = rtrim( $destination, '/' ) . '/' . $command_slug . '.md';
+
+		if ( $dry_run ) {
+			WP_CLI::line( "Would generate: {$output_file}" );
+			return true;
+		}
+
 		if ( file_put_contents( $output_file, $markdown_content ) ) {
 			WP_CLI::line( "Generated: {$output_file}" );
 			return true;
@@ -288,8 +294,7 @@ class Manify_Command {
 			return $matches[1];
 		}
 
-		// Use method name as-is when no @subcommand tag is present.
-		return $method_name;
+		return str_replace( '_', '-', $method_name );
 	}
 
 	/**
