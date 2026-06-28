@@ -10,8 +10,29 @@ Quick links: [Using](#using) | [Installing](#installing)
 ## Using
 
 ~~~
-wp manify
+wp manify generate [--destination=<destination>] [--dry-run]
 ~~~
+
+**OPTIONS**
+
+	[--destination=<destination>]
+		Destination folder for the generated markdown files.
+		---
+		default: docs/
+		---
+
+	[--dry-run]
+		Print file paths that would be generated without writing files.
+
+**EXAMPLES**
+
+    # Generate docs for current project's WP-CLI commands.
+    $ wp manify generate
+    Success: Documentation generated successfully.
+
+    # Generate docs with custom destination.
+    $ wp manify generate --destination=./generated-docs
+    Success: Documentation generated successfully.
 
 ## Installing
 
