@@ -2,7 +2,7 @@ Feature: Error handling
 
   Scenario: Error when no composer.json found
     Given an empty directory
-    When I try `wp manify generate`
+    When I try `wp manify`
     Then STDERR should contain:
       """
       No composer.json file found
@@ -15,7 +15,7 @@ Feature: Error handling
       """
       { not valid json
       """
-    When I try `wp manify generate`
+    When I try `wp manify`
     Then STDERR should contain:
       """
       Invalid JSON in composer.json
@@ -28,7 +28,7 @@ Feature: Error handling
       """
       {"name":"test/plugin"}
       """
-    When I try `wp manify generate`
+    When I try `wp manify`
     Then STDERR should contain:
       """
       No "extra" section found
@@ -41,7 +41,7 @@ Feature: Error handling
       """
       {"name":"test/plugin","extra":{}}
       """
-    When I try `wp manify generate`
+    When I try `wp manify`
     Then STDERR should contain:
       """
       No WP-CLI commands found
@@ -54,7 +54,7 @@ Feature: Error handling
       """
       {"name":"test/plugin","extra":{"wp-cli-commands":{"my-cmd":{}}}}
       """
-    When I try `wp manify generate`
+    When I try `wp manify`
     Then STDERR should contain:
       """
       No class specified for command 'my-cmd'
@@ -66,7 +66,7 @@ Feature: Error handling
       """
       {"name":"test/plugin","extra":{"wp-cli-commands":{"my-cmd":{"class":"Missing_Class","file":"missing.php"}}}}
       """
-    When I try `wp manify generate`
+    When I try `wp manify`
     Then STDERR should contain:
       """
       Class not found: Missing_Class

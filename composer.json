@@ -50,7 +50,7 @@
   },
   "extra": {
     "commands": [
-      "manify generate"
+      "manify"
     ],
     "readme": {
       "sections": [

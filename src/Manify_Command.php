@@ -37,11 +37,11 @@ class Manify_Command {
 	 * ## EXAMPLES
 	 *
 	 *     # Generate docs for current project's WP-CLI commands.
-	 *     $ wp manify generate
+	 *     $ wp manify
 	 *     Success: Documentation generated successfully.
 	 *
 	 *     # Generate docs with custom destination.
-	 *     $ wp manify generate --destination=./generated-docs
+	 *     $ wp manify --destination=./generated-docs
 	 *     Success: Documentation generated successfully.
 	 *
 	 * @since 1.0.0
@@ -51,7 +51,7 @@ class Manify_Command {
 	 *
 	 * @when before_wp_load
 	 */
-	public function generate( $args, $assoc_args = [] ) {
+	public function __invoke( $args, $assoc_args = [] ) {
 		$destination = $assoc_args['destination'] ?? 'docs/';
 		$dry_run     = (bool) get_flag_value( $assoc_args, 'dry-run', false );
 
