@@ -31,7 +31,7 @@ Feature: Documentation generation
           public function create( $args, $assoc_args ) {}
       }
       """
-    When I run `wp manify generate`
+    When I run `wp manify`
     Then the docs/my-plugin.md file should exist
     And the docs/my-plugin.md file should contain:
       """
@@ -68,7 +68,7 @@ Feature: Documentation generation
           public function list_items( $args, $assoc_args ) {}
       }
       """
-    When I run `wp manify generate`
+    When I run `wp manify`
     Then the docs/my-plugin.md file should contain:
       """
       # wp my-plugin list-items
@@ -102,7 +102,7 @@ Feature: Documentation generation
           public function list_items( $args, $assoc_args ) {}
       }
       """
-    When I run `wp manify generate`
+    When I run `wp manify`
     Then the docs/my-plugin.md file should contain:
       """
       # wp my-plugin list
@@ -139,7 +139,7 @@ Feature: Documentation generation
           public function run( $args, $assoc_args ) {}
       }
       """
-    When I run `wp manify generate`
+    When I run `wp manify`
     Then the docs/my-plugin-run.md file should contain:
       """
       # wp my-plugin run
@@ -171,7 +171,7 @@ Feature: Documentation generation
           public function __invoke( $args, $assoc_args ) {}
       }
       """
-    When I run `wp manify generate`
+    When I run `wp manify`
     Then the docs/my-plugin.md file should contain:
       """
       # wp my-plugin
@@ -209,7 +209,7 @@ Feature: Documentation generation
           public function undocumented( $args, $assoc_args ) {}
       }
       """
-    When I run `wp manify generate`
+    When I run `wp manify`
     Then the docs/my-plugin.md file should contain:
       """
       # wp my-plugin documented
@@ -242,7 +242,7 @@ Feature: Documentation generation
           public function run( $args, $assoc_args ) {}
       }
       """
-    When I try `wp manify generate`
+    When I try `wp manify`
     Then STDERR should contain:
       """
       No documented methods on My_Empty_Command
@@ -275,7 +275,7 @@ Feature: Documentation generation
           public function list( $args, $assoc_args ) {}
       }
       """
-    When I run `wp manify generate --destination=api-docs`
+    When I run `wp manify --destination=api-docs`
     Then the api-docs/my-plugin.md file should exist
 
   Scenario: Dry run prints path without writing file
@@ -304,7 +304,7 @@ Feature: Documentation generation
           public function list( $args, $assoc_args ) {}
       }
       """
-    When I run `wp manify generate --dry-run`
+    When I run `wp manify --dry-run`
     Then STDOUT should contain:
       """
       Would generate: docs/my-plugin.md
@@ -338,7 +338,7 @@ Feature: Documentation generation
           public function run( $args, $assoc_args ) {}
       }
       """
-    When I run `wp manify generate`
+    When I run `wp manify`
     Then the docs/my-plugin-run.md file should exist
     And the docs/my-plugin run.md file should not exist
 
@@ -373,7 +373,7 @@ Feature: Documentation generation
           public function list( $args, $assoc_args ) {}
       }
       """
-    When I run `wp manify generate`
+    When I run `wp manify`
     Then the docs/my-plugin.md file should contain:
       """
       ## OPTIONS
@@ -415,7 +415,7 @@ Feature: Documentation generation
           public function list( $args, $assoc_args ) {}
       }
       """
-    When I run `wp manify generate`
+    When I run `wp manify`
     Then the docs/my-plugin.md file should contain:
       """
       ## EXAMPLES

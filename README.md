@@ -10,7 +10,7 @@ Quick links: [Using](#using) | [Installing](#installing)
 ## Using
 
 ~~~
-wp manify generate [--destination=<destination>] [--dry-run]
+wp manify [--destination=<destination>] [--dry-run]
 ~~~
 
 **OPTIONS**
@@ -27,11 +27,11 @@ wp manify generate [--destination=<destination>] [--dry-run]
 **EXAMPLES**
 
     # Generate docs for current project's WP-CLI commands.
-    $ wp manify generate
+    $ wp manify
     Success: Documentation generated successfully.
 
     # Generate docs with custom destination.
-    $ wp manify generate --destination=./generated-docs
+    $ wp manify --destination=./generated-docs
     Success: Documentation generated successfully.
 
 ## Installing
