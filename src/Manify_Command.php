@@ -125,7 +125,7 @@ class Manify_Command {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return array|false Composer data array or false on validation failure.
+	 * @return array Composer data array.
 	 */
 	private function validate_composer_file() {
 		// Use the current working directory where the command is run from.
@@ -136,20 +136,17 @@ class Manify_Command {
 
 		if ( ! file_exists( $composer_file ) ) {
 			WP_CLI::error( "No composer.json file found in: {$run_path}" );
-			return false;
 		}
 
 		$composer_data = json_decode( file_get_contents( $composer_file ), true );
 
 		if ( null === $composer_data ) {
 			WP_CLI::error( 'Invalid JSON in composer.json file.' );
-			return false;
 		}
 
 		// Check for WP-CLI commands in extra section.
 		if ( ! isset( $composer_data['extra'] ) ) {
 			WP_CLI::error( 'No "extra" section found in composer.json. WP-CLI commands should be defined in the "extra" section.' );
-			return false;
 		}
 
 		return $composer_data;
@@ -244,9 +241,8 @@ class Manify_Command {
 			}
 
 			if ( ! empty( $options ) ) {
-				$markdown_content .= '## OPTIONS';
-				$options           = str_replace( '## OPTIONS', '', $options );
-				$markdown_content .= $this->get_wrapped( trim( $options ) );
+				$options           = trim( str_replace( '## OPTIONS', '', $options ) );
+				$markdown_content .= "## OPTIONS\n\n{$options}\n\n";
 			}
 
 			if ( ! empty( $examples ) ) {
@@ -263,7 +259,8 @@ class Manify_Command {
 		}
 
 		// Write markdown file.
-		$output_file = rtrim( $destination, '/' ) . '/' . $command_slug . '.md';
+		$filename    = preg_replace( '/[^a-z0-9_-]+/i', '-', $command_slug );
+		$output_file = rtrim( $destination, '/' ) . "/{$filename}.md";
 
 		if ( $dry_run ) {
 			WP_CLI::line( "Would generate: {$output_file}" );
@@ -306,9 +303,42 @@ class Manify_Command {
 	 * @return string Cleaned up examples.
 	 */
 	private function get_clean_examples( $examples ) {
-		$temp_examples = explode( "\n", $examples );
-		$temp_examples = array_map( 'trim', $temp_examples );
-		return implode( "\n", $temp_examples );
+		return $this->dedent( $examples );
+	}
+
+	/**
+	 * Dedents a block of text by stripping the minimum leading whitespace.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $text The text to dedent.
+	 * @return string Dedented text.
+	 */
+	private function dedent( string $text ): string {
+		$lines   = explode( "\n", $text );
+		$indents = [];
+
+		foreach ( $lines as $line ) {
+			if ( '' === trim( $line ) ) {
+				continue;
+			}
+			preg_match( '/^( *)/', $line, $m );
+			$indents[] = strlen( $m[1] );
+		}
+
+		if ( empty( $indents ) ) {
+			return $text;
+		}
+
+		$min = min( $indents );
+
+		return implode(
+			"\n",
+			array_map(
+				fn( $l ) => '' === trim( $l ) ? $l : substr( $l, $min ),
+				$lines
+			)
+		);
 	}
 
 	/**
