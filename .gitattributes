@@ -1,4 +1,5 @@
 /.editorconfig export-ignore
+/.gitattributes export-ignore
 /.claude export-ignore
 /.github export-ignore
 /.gitignore export-ignore
