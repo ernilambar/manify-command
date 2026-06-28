@@ -1,60 +1,33 @@
-# Manify Command
+ernilambar/manify-command
+=========================
 
-A WP-CLI command to generate markdown documentation from WP-CLI commands.
+CLI manual generator.
 
-## Installation
 
-```bash
-wp package install nilambar/manify-command:@stable
-```
 
-## Usage
+Quick links: [Using](#using) | [Installing](#installing)
 
-Generate documentation for all WP-CLI commands:
+## Using
 
-```bash
-wp manify generate
-```
+~~~
+wp manify
+~~~
 
-Generate documentation with custom destination:
+## Installing
 
-```bash
-wp manify generate --destination=./generated-docs
-```
+Installing this package requires WP-CLI v2.13 or greater. Update to the latest stable release with `wp cli update`.
 
-## Options
-
-- `--destination=<destination>` - Destination folder for generated markdown files (default: `docs/`)
-
-## Examples
+Once you've done so, you can install the latest stable version of this package with:
 
 ```bash
-# Generate docs for all plugins
-wp manify generate
-
-# Generate docs with custom destination
-wp manify generate --destination=./generated-docs
+wp package install ernilambar/manify-command:@stable
 ```
 
-## Requirements
+To install the latest development version of this package, use the following command instead:
 
-- WordPress
-- WP-CLI
-- PHP 7.4+
-
-## Configuration
-
-To make your WP-CLI commands discoverable by this package, add the following to your plugin's `composer.json`:
-
-```json
-{
-    "extra": {
-        "wp-cli-commands": {
-            "my-command": {
-                "class": "MyPlugin\\My_Command",
-                "file": "src/My_Command.php"
-            }
-        }
-    }
-}
+```bash
+wp package install ernilambar/manify-command:dev-main
 ```
+
+
+*This README.md is generated dynamically from the project's codebase using `wp scaffold package-readme` ([doc](https://github.com/wp-cli/scaffold-package-command#wp-scaffold-package-readme)). To suggest changes, please submit a pull request against the corresponding part of the codebase.*
