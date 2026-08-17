@@ -26,6 +26,8 @@
 
 	<rule ref="WP_CLI_CS"/>
 
+	<rule ref="NilambarCodingStandard"/>
+
 	<rule ref="WordPress-Core">
 		<exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
 		<exclude name="WordPress.Files.FileName"/>
@@ -90,5 +92,5 @@
 
 	<!-- For help understanding the `testVersion` configuration setting:
 		 https://github.com/PHPCompatibility/PHPCompatibility#sniffing-your-code-for-compatibility-with-specific-php-versions -->
-	<config name="testVersion" value="7.4-"/>
+	<config name="testVersion" value="8.2-"/>
 </ruleset>
