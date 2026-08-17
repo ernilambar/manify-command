@@ -56,10 +56,10 @@ jobs:
       fail-fast: true
       matrix:
         php:
-        - '7.4'
+        - '8.2'
         wordpress: [ 'latest' ]
         include:
-          - php: '7.4'
+          - php: '8.2'
             wordpress: 'latest'
           - php: '8.4'
             wordpress: 'trunk'
